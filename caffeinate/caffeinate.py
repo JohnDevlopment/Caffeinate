@@ -5,7 +5,7 @@ from pynput.keyboard import Key, Controller, Listener
 from typing import Union, AnyStr, Tuple
 
 PROGNAME='caffeinate'
-VERSION='1.0'
+VERSION='0.1.0'
 
 class cf_time:
     @classmethod
