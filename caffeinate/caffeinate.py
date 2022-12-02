@@ -43,7 +43,7 @@ class cf_time:
 
         if split:
             minutes = hours = 0
-            seconds = number
+            seconds = number * multiplier
 
             # Extract minutes and hours from number of seconds
             minutes = int(seconds / 60)
