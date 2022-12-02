@@ -1,8 +1,9 @@
-import argparse, time, re
+import argparse, time, re, subprocess, signal, sys
 from datetime import datetime
 from threading import Thread
 from pynput.keyboard import Key, Controller, Listener
 from typing import Union, AnyStr, Tuple
+from Xlib import display
 
 PROGNAME='caffeinate'
 VERSION='0.1.0'
@@ -112,21 +113,54 @@ class Caffeinate:
             time.sleep(1)
         return False
 
+class CaffeinateRunCommand:
+    def __init__(self):
+        for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
+            signal.signal(sig, self.sigaction)
+
+    def sigaction(*args):
+        self.release()
+        sys.exit(1)
+
+    def release(self):
+        if subprocess.run(['xdg-screensaver', 'resume', self.wid]).returncode != 0:
+            die("could not uninhibit desktop idleness")
+
+    def suspend(self):
+        if subprocess.run(['xdg-screensaver', 'suspend', self.wid]).returncode != 0:
+            die("could not inhibit desktop idleness")
+
+    def run(self, command: str, *args):
+        self.window = make_unmapped_window(PROGNAME)
+        self.wid = hex(self.window.id)
+        self.suspend()
+        command = [command] + list(args)
+        subprocess.run(command)
+        self.release()
+
+def make_unmapped_window(wm_name) -> display.Display:
+    screen = display.Display().screen()
+    window = screen.root.create_window(0, 0, 1, 1, 0, screen.root_depth)
+    window.set_wm_name(wm_name)
+    window.set_wm_protocols([])
+    return window
+
+def die(err):
+    sys.exit(PROGNAME + ': ' + err)
+
 def run():
     """
     Listens for user's keystrokes, if none for given time, shift is pressed to keep the computer awake
     Args:
         --time ([int]): [default time interval for keypress to take place]
     """
-    caffeinate = Caffeinate()
-
     parser = argparse.ArgumentParser(prog=PROGNAME)
     subparsers = parser.add_subparsers(help='pass --help to the subcommand for options',
                                        title='subcommands', dest='subcommand', required=True)
     # Subcommand 'do'
     parser_do = subparsers.add_parser('do', help='keep the computer awake while a command runs',
                                       description='Runs COMMAND and keeps computer awake until it finishes.')
-    parser_do.add_argument('COMMAND', nargs=1, help='command to run')
+    parser_do.add_argument('COMMAND', help='command to run')
     parser_do.add_argument('ARGUMENT', nargs='*', default=None, help='arguments to command')
     # Subcommand 'loop'
     parser_loop = subparsers.add_parser('loop', help='keep the computer awake until the user stops it',
@@ -142,6 +176,8 @@ def run():
 
     match args.subcommand:
         case 'loop':
+            caffeinate = Caffeinate()
+            
             listener = Listener(
                 on_press=caffeinate.on_press,
                 on_release=caffeinate.on_release)
@@ -152,7 +188,8 @@ def run():
             listener.join()
             awake.join()
         case 'do':
-            raise NotImplementedError("subcommand do")
+            runcmd = CaffeinateRunCommand()
+            runcmd.run(args.COMMAND, *args.ARGUMENT)
 
 if __name__ == '__main__':
     run()
