@@ -118,7 +118,7 @@ class CaffeinateRunCommand:
         for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
             signal.signal(sig, self.sigaction)
 
-    def sigaction(*args):
+    def sigaction(self, *args):
         self.release()
         sys.exit(1)
 
