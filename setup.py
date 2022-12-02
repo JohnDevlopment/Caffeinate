@@ -11,13 +11,13 @@ setup(
    author='Subash Poudyal',
    author_email='subash.poudyal8@gmail.com',
    packages=['caffeinate'],
-   python_requires=">=3.6.3",
+   python_requires=">=3.10",
    url='https://github.com/subash774/Caffeinate',
    license='MIT',
    description="Don't let your computer go to sleep while you're busy thinking",
    long_description_content_type='text/markdown',
    long_description= readme(),
-   install_requires=['pynput>=1.7.2'],
+   install_requires=['pynput>=1.7.2', 'xlib>=0.21'],
    zip_safe=False,
    entry_points={
         'console_scripts': [
