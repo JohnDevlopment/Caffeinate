@@ -143,6 +143,13 @@ class CaffeinateRunCommand:
         subprocess.run(command)
         self.release()
 
+    def sleep(self, seconds: int):
+        self.__make_window()
+        self.suspend()
+        print(f"Sleeping for {seconds} seconds")
+        time.sleep(seconds)
+        self.release()
+
 def make_unmapped_window(wm_name) -> display.Display:
     screen = display.Display().screen()
     window = screen.root.create_window(0, 0, 1, 1, 0, screen.root_depth)
@@ -171,6 +178,12 @@ def run():
     parser_loop = subparsers.add_parser('loop', help='keep the computer awake until the user stops it',
                                         description="Run this command to prevent the computer from falling asleep. "
                                         "This command never finishes until the user stops it.")
+    # Subcommand 'sleep'
+    parser_sleep = subparsers.add_parser('sleep', help='keep the computer awake for a given period of time',
+                                         description='This command keeps the computer awake for given amount of time.')
+    parser_sleep.add_argument('TIME', default='1:30', type=cf_time,
+                              help='sleep for a certain amoutn of time; can be number with optional h/m suffix, '
+                              'or a string in the [[HH:]M]M:SS format')
     # Global options
     parser.add_argument('-V', '--version', action='version', version=f"%(prog)s {VERSION}",
                         help='print the program version and exit')
@@ -182,7 +195,7 @@ def run():
     match args.subcommand:
         case 'loop':
             caffeinate = Caffeinate()
-            
+
             listener = Listener(
                 on_press=caffeinate.on_press,
                 on_release=caffeinate.on_release)
@@ -195,6 +208,9 @@ def run():
         case 'do':
             runcmd = CaffeinateRunCommand()
             runcmd.run(args.COMMAND, *args.ARGUMENT)
+        case 'sleep':
+            runcmd = CaffeinateRunCommand()
+            runcmd.sleep(args.TIME.seconds)
 
 if __name__ == '__main__':
     run()
