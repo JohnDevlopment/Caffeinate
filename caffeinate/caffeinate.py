@@ -102,15 +102,17 @@ class Caffeinate:
         else:
             self.hist = 0
 
-    def stay_awake(self, wait):
+    def stay_awake(self, wait: int):
         print(f"Serving caffeine every {wait} seconds.")
         print("To quit, press the Escape key three times.")
+
         while self.hist < 3:
             if (datetime.now() - self.last_online).seconds > wait:
                 self.keyboard.press(Key.shift)
                 self.keyboard.release(Key.shift)
                 self.last_online = datetime.now()
             time.sleep(1)
+
         return False
 
 class CaffeinateRunCommand:
@@ -130,9 +132,12 @@ class CaffeinateRunCommand:
         if subprocess.run(['xdg-screensaver', 'suspend', self.wid]).returncode != 0:
             die("could not inhibit desktop idleness")
 
-    def run(self, command: str, *args):
+    def __make_window(self):
         self.window = make_unmapped_window(PROGNAME)
         self.wid = hex(self.window.id)
+
+    def run(self, command: str, *args):
+        self.__make_window()
         self.suspend()
         command = [command] + list(args)
         subprocess.run(command)
