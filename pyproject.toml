@@ -1,6 +1,6 @@
 [project]
 name = "caffeinate"
-version = "0.1.0"
+version = "1.0.0a0"
 description = "MIT"
 authors = [
     {name = "JohnDevlopment",email = "50782633+JohnDevlopment@users.noreply.github.com"}
