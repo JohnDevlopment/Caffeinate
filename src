@@ -1,0 +1,34 @@
+# -*- mode: sh; -*-
+
+if [ -z "$VIRTUAL_ENV_PROMPT" ]; then
+    source .venv/bin/activate
+fi
+alias reset_prompt='PS1="$OLD_PS1"'
+OLD_PS1="$PS1"
+PS1="($VIRTUAL_ENV_PROMPT) "'\[\e]0;\u@\h:\W\a\]\[\e[1;32m\]\u@\h\[\e[0m\]:\[\e[1;34m\]\W\[\033[00m\]\$ '
+
+alias emacs="execnohup emacs; unalias emacs; history -s execnohup emacs"
+alias git-gui="execnohup -sleep 2 -n 2 git gui; unalias git-gui; history -s execnohup -sleep 2 -n 2 git gui"
+alias rmcache='find -type d -iname __pycache__ -execdir rm -rfv \{} \; 2> /dev/null'
+
+source ~/src/.fzf-history
+source ~/src/.gitprojectrc --python
+
+history -c
+HISTFILE="$VIRTUAL_ENV/.bash_history"
+HISTSIZE=500
+HISTFILESIZE=500
+export HISTFILE HISTSIZE HISTFILESIZE
+history -r
+
+## usage: list-commands
+function list-commands {
+	cat <<EOF
+Commands:
+  * emacs (once, modifies history)
+  * git-gui (once, modifies history)
+  * rmcache 
+EOF
+}
+
+list-commands
