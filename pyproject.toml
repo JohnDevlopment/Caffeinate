@@ -1,0 +1,28 @@
+[project]
+name = "caffeinate"
+version = "0.1.0"
+description = "MIT"
+authors = [
+    {name = "JohnDevlopment",email = "50782633+JohnDevlopment@users.noreply.github.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pynput (>=1.8.1,<2.0.0)",
+    "xlib (>=0.21,<0.22)"
+]
+
+[tool.poetry]
+
+[tool.poetry.group.dev.dependencies]
+basedpyright = "^1.29.2"
+icecream = "^2.1.4"
+ruff = "^0.11.12"
+
+[tool.scripts]
+awake = "caffeinate.caffeinate:run"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
