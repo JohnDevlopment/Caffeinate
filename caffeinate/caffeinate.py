@@ -1,12 +1,19 @@
-import argparse, time, re, subprocess, signal, sys
+"""A module of classes that keep the computer awake for a period of time."""
+import argparse
+import re
+import signal
+import subprocess
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
 from threading import Thread
-from pynput.keyboard import Key, Controller, Listener
-from typing import Union, AnyStr, Tuple
+from typing import Tuple, Union
+
+from pynput.keyboard import Controller, Key, Listener
 from Xlib import display
 
-PROGNAME='caffeinate'
-VERSION='0.1.0'
+APP = str(Path(sys.argv[0]).stem)
 
 class cf_time:
     @classmethod
@@ -133,7 +140,7 @@ class CaffeinateRunCommand:
             die("could not inhibit desktop idleness")
 
     def __make_window(self):
-        self.window = make_unmapped_window(PROGNAME)
+        self.window = make_unmapped_window(APP)
         self.wid = hex(self.window.id)
 
     def run(self, command: str, *args):
@@ -158,7 +165,7 @@ def make_unmapped_window(wm_name) -> display.Display:
     return window
 
 def die(err):
-    sys.exit(PROGNAME + ': ' + err)
+    sys.exit(APP + ': ' + err)
 
 def run():
     """
@@ -166,7 +173,7 @@ def run():
     Args:
         --time ([int]): [default time interval for keypress to take place]
     """
-    parser = argparse.ArgumentParser(prog=PROGNAME)
+    parser = argparse.ArgumentParser(prog=APP)
     subparsers = parser.add_subparsers(help='pass --help to the subcommand for options',
                                        title='subcommands', dest='subcommand', required=True)
     # Subcommand 'do'
