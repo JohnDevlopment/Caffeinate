@@ -10,7 +10,8 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "pynput (>=1.8.1,<2.0.0)",
-    "xlib (>=0.21,<0.22)"
+    "xlib (>=0.21,<0.22)",
+    "typing-extensions (>=4.14.0,<5.0.0)"
 ]
 
 [tool.poetry]

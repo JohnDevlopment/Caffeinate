@@ -306,6 +306,18 @@ files = [
 ]
 
 [[package]]
+name = "typing-extensions"
+version = "4.14.0"
+description = "Backported and Experimental Type Hints for Python 3.9+"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "typing_extensions-4.14.0-py3-none-any.whl", hash = "sha256:a1514509136dd0b477638fc68d6a91497af5076466ad0fa6c338e44e359944af"},
+    {file = "typing_extensions-4.14.0.tar.gz", hash = "sha256:8676b788e32f02ab42d9e7c61324048ae4c6d844a399eebace3d4979d75ceef4"},
+]
+
+[[package]]
 name = "xlib"
 version = "0.21"
 description = "Python X Library"
@@ -323,4 +335,4 @@ six = ">=1.10.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "436ba534e7548ce8d9b36f8182b4f2937e0382634a6e93307691e80cd3288aca"
+content-hash = "2ffdef5c58368b64dd345d468fd4d53154642a61448f63c4f957335f3c2cbbb6"
