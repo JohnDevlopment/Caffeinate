@@ -1,6 +1,7 @@
 """
 A module of classes that keep the computer awake for a period of time.
 """
+from __future__ import annotations
 
 import argparse
 import re
@@ -12,9 +13,10 @@ from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Thread
-from typing import TYPE_CHECKING, Type, no_type_check
+from typing import TYPE_CHECKING, Annotated, Optional, Type, no_type_check
 
 from pynput.keyboard import Controller, Key, Listener
+from typer import Argument, Exit, Option, Typer
 from Xlib import display
 
 from . import __version__ as VERSION
@@ -25,6 +27,10 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 APP = str(Path(sys.argv[0]).stem)
+CONTEXT_SETTINGS = {
+    'help_option_names': ["--help", "-h"],
+}
+app = Typer(context_settings=CONTEXT_SETTINGS)
 
 def timestring(string: str) -> timedelta:
     if (not re.fullmatch(r'(?:[0-9]{1,2}:)*[0-9]{2}', string)):
@@ -166,33 +172,66 @@ def parse_arguments():
 
     return parser.parse_args()
 
-def run():
+@app.command()
+def loop(
+    seconds: Annotated[float, Argument()]=3.0
+):
     """
-    Listens for user's keystrokes, if none for given time, shift is pressed to keep the computer awake
-    Args:
-        --time ([int]): [default time interval for keypress to take place]
+    Keep the screen awake indefinitely.
+
+    This command does not stop on its own: press Escape three
+    times to end it.
     """
-    args = parse_arguments()
+    caf = Caffeinate()
+    listener = Listener(
+        on_press=caf.on_press,
+        on_release=caf.on_release       # pyright: ignore
+    )
+    worker = Thread(target=caf.stay_awake, args=(seconds,))
 
-    match args.subcommand:
-        case 'loop':
-            caffeinate = Caffeinate()
+    listener.start()
+    worker.start()
+    listener.join()
+    worker.join()
 
-            listener = Listener(
-                on_press=caffeinate.on_press,
-                on_release=caffeinate.on_release)
-            awake = Thread(target=caffeinate.stay_awake, args=(args.time.seconds,))
+@app.command()
+def do(
+    command: Annotated[str, Argument(help="The command to run.")],
+    args: Annotated[Optional[list[str]], Argument(show_default=False)]=None
+):
+    """
+    Run a command, keeping the screen awake all the while.
+    """
+    runcmd = CaffeinateRunCommand()
+    args = args if args is not None else []
+    runcmd.run(command, *args)
 
-            listener.start()
-            awake.start()
-            listener.join()
-            awake.join()
-        case 'do':
-            runcmd = CaffeinateRunCommand()
-            runcmd.run(args.COMMAND, *args.ARGUMENT)
-        case 'sleep':
-            runcmd = CaffeinateRunCommand()
-            runcmd.sleep(args.TIME.seconds)
+@app.command()
+def sleep(
+    time: Annotated[timedelta, Argument(help="Sleep for this amount of time.", parser=timestring,
+                                        metavar="TIME", show_default=False)]
+):
+    """
+    Sleep for a given period of time while keeping the screen
+    awake.
+    """
+    runcmd = CaffeinateRunCommand()
+    runcmd.sleep(time.seconds)
+
+def version_callback(value: bool) -> None:
+    if value:
+        print(f"{APP} version {VERSION}")
+        raise Exit()
+
+@app.callback()
+def run(
+    _version: Annotated[Optional[bool], Option("--version", callback=version_callback,
+                                               help="Show the program version and exit.",
+                                               is_eager=True)]=None
+):
+    """
+    Keep the computer awake while doing something.
+    """
 
 if __name__ == '__main__':
-    run()
+    app()
