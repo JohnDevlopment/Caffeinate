@@ -8,15 +8,21 @@ import signal
 import subprocess
 import sys
 import time
+from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from pathlib import Path
 from threading import Thread
-from typing import Tuple, Union
+from typing import TYPE_CHECKING, Type, no_type_check
 
 from pynput.keyboard import Controller, Key, Listener
 from Xlib import display
 
 from . import __version__ as VERSION
+
+if TYPE_CHECKING:
+    from types import TracebackType
+
+    from typing_extensions import Self
 
 APP = str(Path(sys.argv[0]).stem)
 
@@ -68,40 +74,58 @@ class Caffeinate:
 
         return False
 
+class SuspendedWindow(AbstractContextManager):
+    def __init__(self, wid: str):
+        self.wid = wid
+
+    def __enter__(self) -> Self:
+        self.suspend()
+        return self
+
+    def __exit__(self, exc_type: Type[BaseException] | None,
+                 exc_value: BaseException | None,
+                 traceback: TracebackType | None):
+        self.release()
+
+    def release(self):
+        subprocess.run(['xdg-screensaver', 'resume', self.wid], text=True, check=True)
+
+    def suspend(self):
+        subprocess.run(['xdg-screensaver', 'suspend', self.wid], text=True, check=True)
+
 class CaffeinateRunCommand:
     def __init__(self):
         for sig in [signal.SIGINT, signal.SIGTERM, signal.SIGHUP]:
-            signal.signal(sig, self.sigaction)
+            signal.signal(sig, self._sigaction)
 
-    def sigaction(self, *args):
+    def _sigaction(self, *_args):
         self.release()
         sys.exit(1)
 
     def release(self):
-        if subprocess.run(['xdg-screensaver', 'resume', self.wid]).returncode != 0:
-            die("could not uninhibit desktop idleness")
+        subprocess.run(['xdg-screensaver', 'resume', self.wid], text=True, check=True)
 
-    def suspend(self):
-        if subprocess.run(['xdg-screensaver', 'suspend', self.wid]).returncode != 0:
-            die("could not inhibit desktop idleness")
-
+    @no_type_check
     def __make_window(self):
         self.window = make_unmapped_window(APP)
         self.wid = hex(self.window.id)
 
     def run(self, command: str, *args):
+        """
+        Run COMMAND with *ARGS with a suspended window.
+        """
         self.__make_window()
-        self.suspend()
-        command = [command] + list(args)
-        subprocess.run(command)
-        self.release()
+        with SuspendedWindow(self.wid):
+            subprocess.run([command, *args])
 
     def sleep(self, seconds: int):
+        """
+        Sleep for SECONDS seconds with a suspended window.
+        """
         self.__make_window()
-        self.suspend()
-        print(f"Sleeping for {seconds} seconds")
-        time.sleep(seconds)
-        self.release()
+        with SuspendedWindow(self.wid):
+            print(f"Sleeping for {seconds} seconds")
+            time.sleep(seconds)
 
 def make_unmapped_window(wm_name) -> display.Display:
     screen = display.Display().screen()
